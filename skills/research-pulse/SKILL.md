@@ -11,9 +11,7 @@ Use this skill to run Research Pulses through the external CLI and API contract 
 
 1. Ensure the CLI path exists or install it with Homebrew.
 
-- In this repo, prefer `./bin/converge`.
-- If the binary is missing, run `make build-cli`.
-- Outside this repo, prefer a `converge` binary already on `PATH`.
+- Prefer a `converge` binary already on `PATH`.
 - If `converge` is missing and `brew` is available, install the public binary-only CLI:
 
 ```bash
@@ -24,7 +22,6 @@ brew install converge
 
 - If `converge` is already installed with Homebrew but needs the latest available release, run `brew update` and `brew upgrade converge`.
 - If Homebrew is unavailable, say that the CLI is missing and ask the user to install `converge` or provide a path to it.
-- Outside this repo, use `converge` in the command patterns below instead of `./bin/converge`.
 
 2. Resolve auth, base URL, and defaults before submitting a run.
 
@@ -93,19 +90,19 @@ brew install converge
 Discover selectors:
 
 ```bash
-./bin/converge pulse models --config <path> --profile <name>
+converge pulse models --config <path> --profile <name>
 ```
 
 Discover selectors plus machine-readable recent stats:
 
 ```bash
-./bin/converge pulse models --config <path> --profile <name> --json
+converge pulse models --config <path> --profile <name> --json
 ```
 
 Submit a run and wait for Markdown plus JSON:
 
 ```bash
-./bin/converge pulse run \
+converge pulse run \
   --wait \
   --question-file <workspace-question-path> \
   --output <workspace-result-path>.md \
@@ -117,7 +114,7 @@ Submit a run and wait for Markdown plus JSON:
 Override models for a one-off run:
 
 ```bash
-./bin/converge pulse run \
+converge pulse run \
   --wait \
   --question-file <workspace-question-path> \
   --model gpt-5-mini \
@@ -129,18 +126,18 @@ Override models for a one-off run:
 Advisor-aware commands, when supported by the connected Converge build:
 
 ```bash
-./bin/converge advisors templates
+converge advisors templates
 ```
 
 ```bash
-./bin/converge advisors create \
+converge advisors create \
   --name "Contrarian" \
   --description "Looks for likely failure modes." \
   --instructions-file <workspace-advisor-path>.md
 ```
 
 ```bash
-./bin/converge pulse run \
+converge pulse run \
   --wait \
   --question-file <workspace-question-path> \
   --council \
@@ -152,7 +149,7 @@ Advisor-aware commands, when supported by the connected Converge build:
 ```
 
 ```bash
-./bin/converge pulse run \
+converge pulse run \
   --wait \
   --question-file <workspace-question-path> \
   --council \
@@ -163,7 +160,7 @@ Advisor-aware commands, when supported by the connected Converge build:
 ```
 
 ```bash
-./bin/converge pulse helper start \
+converge pulse helper start \
   --message "Help me refine this question." \
   --model gpt-5 \
   --model claude-sonnet-4 \
@@ -173,7 +170,7 @@ Advisor-aware commands, when supported by the connected Converge build:
 Wait on an existing run:
 
 ```bash
-./bin/converge pulse watch <run-id> \
+converge pulse watch <run-id> \
   --output <workspace-result-path>.md \
   --json-output <workspace-result-path>.json
 ```
@@ -181,7 +178,7 @@ Wait on an existing run:
 Export artifacts for a completed run:
 
 ```bash
-./bin/converge pulse export <run-id> \
+converge pulse export <run-id> \
   --output <workspace-result-path>.md \
   --json-output <workspace-result-path>.json
 ```
@@ -189,13 +186,13 @@ Export artifacts for a completed run:
 Inspect account share-feed status:
 
 ```bash
-./bin/converge feed status --config <path> --profile <name>
+converge feed status --config <path> --profile <name>
 ```
 
 Enable the share feed:
 
 ```bash
-./bin/converge feed enable \
+converge feed enable \
   --title "Research Pulse Shares" \
   --description "Published Converge Research Pulse outputs." \
   --config <path> \
@@ -205,19 +202,19 @@ Enable the share feed:
 Print feed URLs:
 
 ```bash
-./bin/converge feed urls --config <path> --profile <name>
+converge feed urls --config <path> --profile <name>
 ```
 
 Fetch a feed with URL discovery:
 
 ```bash
-./bin/converge feed fetch --format atom --config <path> --profile <name>
+converge feed fetch --format atom --config <path> --profile <name>
 ```
 
 Fetch a known feed URL with a least-privilege key:
 
 ```bash
-./bin/converge feed fetch \
+converge feed fetch \
   --format json \
   --url <feed-url> \
   --base-url <converge-base-url> \
@@ -227,11 +224,11 @@ Fetch a known feed URL with a least-privilege key:
 Rotate the feed URL only after explicit confirmation:
 
 ```bash
-./bin/converge feed rotate --confirm --config <path> --profile <name>
+converge feed rotate --confirm --config <path> --profile <name>
 ```
 
 Fetch a public share as Markdown:
 
 ```bash
-./bin/converge share markdown <share-slug> --output <workspace-share-path>.md
+converge share markdown <share-slug> --output <workspace-share-path>.md
 ```
