@@ -2,6 +2,8 @@
 
 The `converge` CLI uses a TOML config file for reusable endpoint, auth, model, advisor, progress, and timeout defaults.
 
+Billing commands use the same `base_url` and `api_key` resolution as other CLI commands. Do not store wallet private keys, signer secrets, raw `PAYMENT-SIGNATURE` payloads, or one-time payment material in this config file.
+
 ## Discovery
 
 The CLI discovers config files in this order:

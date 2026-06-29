@@ -50,6 +50,7 @@ brew install converge
 
 - For a new run that should finish in this turn, use `converge pulse run --wait`.
 - Pass `--output` for Markdown, `--json-output` for full JSON, or both.
+- When prepaid billing may be enabled, use `--max-spend-usd <amount>` to set an explicit cap for the paid operation.
 - Add `--model` and `--synth-model` only when overriding config defaults.
 - In advisor-capable builds, use `--advisor '<selector>=advisor:<id>'` or `--advisor '<selector>=template:<key>'` for explicit assignments.
 - In advisor-capable builds, `--use-saved-advisors` is the explicit opt-in path for reusing saved advisor defaults on a direct CLI run.
@@ -66,8 +67,20 @@ brew install converge
 - If Markdown or JSON files were written, report the exact paths.
 - Exit code `2` means partial failure with a usable result; explain that clearly instead of treating it like a hard failure.
 - Exit code `1` means request, auth, config, or terminal failure without a usable final result.
+- If the CLI reports insufficient prepaid credits, do not retry the same paid operation blindly. Check `converge billing balance`, top up if appropriate, then rerun with an explicit `--max-spend-usd` cap.
+- If the CLI reports `max_spend_exceeded`, do not remove the cap reflexively. Either raise it intentionally after user approval or choose cheaper models.
 
-8. Use supported share-feed commands for published shares.
+8. Check or top up prepaid billing credits when needed.
+
+- Use `converge billing balance` to inspect available and reserved prepaid credits.
+- Use `converge billing skus` before choosing a top-up SKU. Enabled top-up SKUs enforce the current $10 minimum, so do not assume smaller top-ups exist.
+- Use `converge billing top-up --sku <sku-id>` to request a scoped x402 payment challenge.
+- Use `converge billing ledger --limit <n>` when you need recent credit/hold/capture/release history. There is no current `converge billing reservations` command; reservation detail is available through browser Settings/Admin billing surfaces.
+- In headless environments, use `--signer-command <command>` only when the runtime provides a trusted signer. The CLI sends a JSON payload on stdin and expects the signed payment payload on stdout.
+- Treat `--payment-signature` as an explicit manual/debug path, and pair it with a stable `--idempotency-key`.
+- Never store wallet private keys or raw payment signatures in the Converge config file or workspace notes.
+
+9. Use supported share-feed commands for published shares.
 
 - Use `converge feed status` to inspect whether the account feed exists, is enabled, and has password protection.
 - Use `converge feed enable`, `converge feed disable`, `converge feed set-password`, `converge feed clear-password`, and `converge feed rotate` for management.
@@ -105,6 +118,7 @@ Submit a run and wait for Markdown plus JSON:
 converge pulse run \
   --wait \
   --question-file <workspace-question-path> \
+  --max-spend-usd 2.50 \
   --output <workspace-result-path>.md \
   --json-output <workspace-result-path>.json \
   --config <path> \
@@ -165,6 +179,39 @@ converge pulse helper start \
   --model gpt-5 \
   --model claude-sonnet-4 \
   --council
+```
+
+Submit a Question Helper session with a prepaid-credit cap:
+
+```bash
+converge pulse helper submit <session-id> --max-spend-usd 2.50
+```
+
+Check prepaid credits:
+
+```bash
+converge billing balance --config <path> --profile <name>
+```
+
+List top-up SKUs:
+
+```bash
+converge billing skus --config <path> --profile <name>
+```
+
+Request a top-up challenge:
+
+```bash
+converge billing top-up --sku usd_10 --config <path> --profile <name>
+```
+
+Settle a top-up with a headless signer, when the runtime provides one:
+
+```bash
+converge billing top-up \
+  --sku usd_10 \
+  --idempotency-key <stable-key> \
+  --signer-command <payment-signer-command>
 ```
 
 Wait on an existing run:
