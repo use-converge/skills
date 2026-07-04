@@ -1,4 +1,4 @@
 interface:
   display_name: "Research Pulse"
-  short_description: "Run Research Pulses via Converge"
-  default_prompt: "Use $research-pulse to submit a Research Pulse and write the results into the workspace."
+  short_description: "Run and triage Research Pulses via Converge"
+  default_prompt: "Use $research-pulse to submit an access-aware Research Pulse, save the results, and triage the model outputs."

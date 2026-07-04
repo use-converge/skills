@@ -1,6 +1,6 @@
 ---
 name: research-pulse
-description: Manage advisor-aware Converge Research Pulse workflows through the supported `converge` CLI path, wait for completion, manage share feeds, and write Markdown or JSON artifacts into the workspace. Use when Codex needs to manage Advisors, run a Research Pulse for a user, export results to files, inspect or fetch account share feeds, reuse config profiles, or drive Research Pulse from an agent workflow without calling internal Go packages directly.
+description: Manage advisor-aware Converge Research Pulse workflows through the supported `converge` CLI path, wait for completion, manage share feeds, and write Markdown or JSON artifacts into the workspace. Use when Codex needs to manage Advisors, run a Research Pulse for a user, export results to files, inspect or fetch account share feeds, reuse config profiles, package artifact-only review context, triage model outputs, or drive Research Pulse from an agent workflow without calling internal Go packages directly.
 ---
 
 # Research Pulse
@@ -46,7 +46,30 @@ brew install converge
 - Otherwise write the question into a workspace file such as `.codex/tmp/research-pulse-question.md` and point the CLI at that file.
 - Keep secrets out of workspace files.
 
-5. Run the pulse through the CLI.
+5. For plan, code, architecture, or artifact review, build an access-aware context packet.
+
+- Assume Research Pulse reviewers cannot inspect the local checkout, private filesystem, screenshots, browser state, or prior Codex reasoning unless the submitted question includes the relevant facts.
+- Label the review mode near the top of the question:
+  - `artifact-only`: reviewers can only see the submitted question/document.
+  - `code-aware`: reviewers can inspect a repo through an explicitly available external tool. Research Pulse is usually not this mode.
+  - `hybrid`: Codex or another local agent inspected code and summarized the important code facts into the packet.
+- For artifact-only or hybrid review, include:
+  - the concrete failure, decision, or artifact being evaluated;
+  - exact observed evidence, traces, commands, paths, and outputs that matter;
+  - relevant code facts already inspected by Codex, clearly labeled as packet evidence;
+  - constraints reviewers must honor;
+  - items already reviewed or accepted by other reviewers;
+  - the findings that are useful now, such as missed failure modes, ambiguities, missing tests, or rollout risks.
+- Tell reviewers to classify claims using:
+  - `Confirmed from packet`: directly supported by included evidence.
+  - `Gap in submitted design`: missing or ambiguous in the artifact.
+  - `Needs repo verification`: plausible, but not provable without code access.
+  - `Already covered`: present in the artifact.
+  - `Suspect`: depends on truncation, missing context, or an unsupported assumption.
+- Tell reviewers not to say "the code does X" unless the packet includes that code fact. Prefer "if the code does X" or "verify whether X" when code access is absent.
+- If the question is long, put a short "Completeness Check" near the end that tells reviewers what the final visible section should be. This helps identify model-side truncation separately from upload/share truncation.
+
+6. Run the pulse through the CLI.
 
 - For a new run that should finish in this turn, use `converge pulse run --wait`.
 - Pass `--output` for Markdown, `--json-output` for full JSON, or both.
@@ -57,12 +80,26 @@ brew install converge
 - When advisors are applied, verify that the CLI echoes the resolved advisor mapping before treating the run input as final.
 - Leave progress enabled unless the user explicitly wants quiet output.
 
-6. Reuse existing runs when appropriate.
+7. Reuse existing runs when appropriate.
 
 - Use `converge pulse watch <run-id>` to wait on an existing run.
 - Use `converge pulse export <run-id>` to fetch artifacts after completion.
 
-7. Report the outcome precisely.
+8. Triage review quality before summarizing important findings.
+
+- Prefer writing both Markdown and JSON when review quality matters.
+- Inspect the JSON when a model claims the input was truncated, incomplete, or missing context. Confirm `.question` length and tail match the staged question when the JSON shape exposes the submitted question.
+- If a public share exists, fetch it with `converge share markdown <slug>` and compare the embedded question against the local staged question before concluding that Converge truncated the upload.
+- Check per-model status and output length in the JSON. Mark tiny outputs, truncation-only outputs, policy-only outputs, or outputs that ignore the access model as suspect.
+- Do not rerun solely because one model reports truncation if the JSON/share contain the full question. Rerun with a smaller complete packet only when multiple useful models appear context-limited or the chair output is dominated by suspect responses.
+- When reporting back, separate:
+  - genuine design gaps;
+  - findings already covered locally;
+  - findings that need repo verification;
+  - suspect model output.
+- Treat Research Pulse as gap discovery and artifact review, not as a substitute for local checkout verification or code-aware reviewers.
+
+9. Report the outcome precisely.
 
 - If Markdown or JSON files were written, report the exact paths.
 - Exit code `2` means partial failure with a usable result; explain that clearly instead of treating it like a hard failure.
@@ -70,7 +107,7 @@ brew install converge
 - If the CLI reports insufficient prepaid credits, do not retry the same paid operation blindly. Check `converge billing balance`, top up if appropriate, then rerun with an explicit `--max-spend-usd` cap.
 - If the CLI reports `max_spend_exceeded`, do not remove the cap reflexively. Either raise it intentionally after user approval or choose cheaper models.
 
-8. Check or top up prepaid billing credits when needed.
+10. Check or top up prepaid billing credits when needed.
 
 - Use `converge billing balance` to inspect available and reserved prepaid credits.
 - Use `converge billing skus` before choosing a top-up SKU. Enabled top-up SKUs enforce the current $10 minimum, so do not assume smaller top-ups exist.
@@ -80,7 +117,7 @@ brew install converge
 - Treat `--payment-signature` as an explicit manual/debug path, and pair it with a stable `--idempotency-key`.
 - Never store wallet private keys or raw payment signatures in the Converge config file or workspace notes.
 
-9. Use supported share-feed commands for published shares.
+11. Use supported share-feed commands for published shares.
 
 - Use `converge feed status` to inspect whether the account feed exists, is enabled, and has password protection.
 - Use `converge feed enable`, `converge feed disable`, `converge feed set-password`, `converge feed clear-password`, and `converge feed rotate` for management.
