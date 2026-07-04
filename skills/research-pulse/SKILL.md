@@ -117,15 +117,19 @@ brew install converge
 - Treat `--payment-signature` as an explicit manual/debug path, and pair it with a stable `--idempotency-key`.
 - Never store wallet private keys or raw payment signatures in the Converge config file or workspace notes.
 
-11. Use supported share-feed commands for published shares.
+11. Use supported share and share-feed commands for published Research Pulse outputs.
 
+- Use `converge share status <run-id>` to inspect whether a run has an active or revoked public share and to print both the HTML and Markdown URLs.
+- Use `converge share enable <run-id>` to create or re-enable a public share for a completed run.
+- Use `converge share disable <run-id>` to revoke an active public share.
+- Share status/enable/disable use the authenticated API-v1 Research Pulse share contract and require `api.full`.
 - Use `converge feed status` to inspect whether the account feed exists, is enabled, and has password protection.
 - Use `converge feed enable`, `converge feed disable`, `converge feed set-password`, `converge feed clear-password`, and `converge feed rotate` for management.
 - Use `converge feed urls` to print Atom/RSS/JSON URLs. URL discovery requires `api.full` or a browser session; a `shares.feed`-only key can read an already-known URL but cannot discover it.
 - Use `converge feed fetch --format atom|rss|json` to fetch or validate the feed. Add `--url` when operating with a least-privilege `shares.feed` key.
 - Use `converge share markdown <slug>` to fetch a public share as Markdown. Do not scrape the HTML page.
 - Feed entries are intentionally link-only. Fetch the linked share page, or `converge share markdown <slug>`, for the complete public artifact.
-- If the connected CLI build does not expose `feed` or `share markdown`, say so plainly and fall back only to existing public share URLs.
+- If the connected CLI build does not expose `feed`, `share status`, `share enable`, `share disable`, or `share markdown`, say so plainly and fall back only to existing public share URLs.
 
 ## Command Patterns
 
@@ -265,6 +269,24 @@ Export artifacts for a completed run:
 converge pulse export <run-id> \
   --output <workspace-result-path>.md \
   --json-output <workspace-result-path>.json
+```
+
+Create or re-enable a public share for a completed run:
+
+```bash
+converge share enable <run-id> --config <path> --profile <name>
+```
+
+Inspect a run's public-share status and links:
+
+```bash
+converge share status <run-id> --config <path> --profile <name>
+```
+
+Disable a run's public share:
+
+```bash
+converge share disable <run-id> --config <path> --profile <name>
 ```
 
 Inspect account share-feed status:
