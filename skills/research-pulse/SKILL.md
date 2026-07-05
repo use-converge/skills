@@ -31,6 +31,9 @@ brew install converge
 - Prefer selectors with stronger recent reliability and lower average latency when the task benefits from fast turn time.
 - Use `converge pulse models --json` when an agent needs machine-readable selector stats; each item includes recent `reliability_percent`, `avg_latency_ms`, `p50_latency_ms`, `p95_latency_ms`, and grouped/daily breakdowns from the same 7-day stats shown in the Providers UI.
 - Read [references/config.md](references/config.md) for config discovery, precedence, and example profiles.
+- Before any paid or state-changing command, state the effective config path, profile name, base URL, and API-key source without printing the key. If the resolved environment is ambiguous, or a local/dev/staging base URL is paired with a production-looking profile, stop and ask for explicit approval or a corrected `--config`, `--profile`, or `--base-url`.
+- In local checkout testing, use the project-provided environment loader when it exists, for example `direnv exec .`, and clear unrelated profile defaults when you need to force localhost behavior. Do not let saved production profile defaults silently steer a local test.
+- For connectivity and selector sanity checks, use `converge pulse models --json` before a paid run. Treat selector failures from an external router or gateway as model/provider availability problems, not as prompt-truncation evidence.
 
 3. Inspect or manage Advisors when the task needs perspective control.
 
@@ -39,12 +42,17 @@ brew install converge
 - Use `converge advisors create` or `converge advisors update` with `--instructions-file` when the instructions are more than a short line.
 - Reuse stored advisors or templates in run commands instead of inlining large instruction blocks into shell arguments.
 - If the connected build does not expose advisor CLI support yet, say so plainly and continue with plain Research Pulse commands or existing web-managed advisors.
+- When using `--advisor` or `--use-saved-advisors`, verify that the run output echoes the intended resolved advisor mapping before treating the results as final. If an assignment references a model selector that is not in the run, fix the mapping and rerun only after confirming the corrected target list.
 
 4. Stage the question in the workspace.
 
 - If the user already has a question file, use it with `--question-file`.
 - Otherwise write the question into a workspace file such as `.codex/tmp/research-pulse-question.md` and point the CLI at that file.
 - Keep secrets out of workspace files.
+- Keep the submitted question body at or below 20,000 characters. The CLI, API, and web UI reject longer question text before starting a run. The browser Research Pulse form supports document uploads; the public CLI and `/api/v1/research-pulses` create API do not currently upload documents, so CLI/API packets must be shortened or summarized until document upload support exists there.
+- Measure the staged file before submitting, for example with `wc -m <question-file>`. Prefer a safe buffer below the hard cap for large packets; if the packet is near the cap, keep only the objective, non-negotiable constraints, key facts, evidence excerpts, and explicit verification requests.
+- If original document fidelity matters more than packet review, use the browser Research Pulse document-upload flow instead of pretending the CLI/API uploaded documents. Label summarized sections as summaries and include source paths or line ranges when relevant.
+- For near-limit packets, add a final `Completeness Check` or tail sentinel in the last 1-2k characters. Use a distinctive token or exact final sentence that reviewers and later JSON/share inspection can verify.
 
 5. For plan, code, architecture, or artifact review, build an access-aware context packet.
 
@@ -67,18 +75,20 @@ brew install converge
   - `Already covered`: present in the artifact.
   - `Suspect`: depends on truncation, missing context, or an unsupported assumption.
 - Tell reviewers not to say "the code does X" unless the packet includes that code fact. Prefer "if the code does X" or "verify whether X" when code access is absent.
-- If the question is long, put a short "Completeness Check" near the end that tells reviewers what the final visible section should be. This helps identify model-side truncation separately from upload/share truncation.
+- If the question is near the limit, put a short "Completeness Check" near the end that tells reviewers what the final visible section should be. This helps identify provider-side context pressure separately from Converge upload/share handling.
+- For near-limit packets, tell reviewers to include the sentinel or final visible sentence when they can see the tail. Absence of that marker in useful model outputs is a truncation or context-pressure signal.
 
 6. Run the pulse through the CLI.
 
 - For a new run that should finish in this turn, use `converge pulse run --wait`.
 - Pass `--output` for Markdown, `--json-output` for full JSON, or both.
-- When prepaid billing may be enabled, use `--max-spend-usd <amount>` to set an explicit cap for the paid operation.
+- For any automated paid run, especially multi-model or council runs, pass `--max-spend-usd <amount>` unless the user explicitly disables caps. Treat each rerun as a new cost center that needs its own cap.
 - Add `--model` and `--synth-model` only when overriding config defaults.
 - In advisor-capable builds, use `--advisor '<selector>=advisor:<id>'` or `--advisor '<selector>=template:<key>'` for explicit assignments.
 - In advisor-capable builds, `--use-saved-advisors` is the explicit opt-in path for reusing saved advisor defaults on a direct CLI run.
 - When advisors are applied, verify that the CLI echoes the resolved advisor mapping before treating the run input as final.
 - Leave progress enabled unless the user explicitly wants quiet output.
+- Prefer a low-risk smoke ladder before expensive work: `converge pulse models --json`, then a tiny capped run with non-sensitive content, then the full run. Validate output paths and JSON shape on the smoke run before spending on a large council run.
 
 7. Reuse existing runs when appropriate.
 
@@ -88,10 +98,11 @@ brew install converge
 8. Triage review quality before summarizing important findings.
 
 - Prefer writing both Markdown and JSON when review quality matters.
-- Inspect the JSON when a model claims the input was truncated, incomplete, or missing context. Confirm `.question` length and tail match the staged question when the JSON shape exposes the submitted question.
-- If a public share exists, fetch it with `converge share markdown <slug>` and compare the embedded question against the local staged question before concluding that Converge truncated the upload.
+- Inspect the JSON first when a model claims the input was truncated, incomplete, or missing context. Confirm `.question` length and tail match the staged question when the JSON shape exposes the submitted question, and verify the `Completeness Check` marker when one was used.
+- If a public share exists, fetch it with `converge share markdown <slug>` and compare the embedded question against the local staged question before concluding that Converge truncated the upload or share rendering.
 - Check per-model status and output length in the JSON. Mark tiny outputs, truncation-only outputs, policy-only outputs, or outputs that ignore the access model as suspect.
-- Do not rerun solely because one model reports truncation if the JSON/share contain the full question. Rerun with a smaller complete packet only when multiple useful models appear context-limited or the chair output is dominated by suspect responses.
+- If JSON/share inspection confirms a tail mismatch, mark the run as packet-truncated and rebuild a smaller complete packet before rerunning.
+- Do not rerun solely because one model reports truncation if the JSON/share contain the full question. Rerun at most once automatically, and only when multiple useful models appear context-limited, the chair output is dominated by suspect responses, or the missing content includes objective, constraints, evidence, or the tail marker.
 - When reporting back, separate:
   - genuine design gaps;
   - findings already covered locally;
@@ -102,10 +113,12 @@ brew install converge
 9. Report the outcome precisely.
 
 - If Markdown or JSON files were written, report the exact paths.
-- Exit code `2` means partial failure with a usable result; explain that clearly instead of treating it like a hard failure.
-- Exit code `1` means request, auth, config, or terminal failure without a usable final result.
+- Exit code `0` means success; proceed with normal artifact and quality triage.
+- Exit code `2` means partial failure with a usable result; preserve artifacts, report failed providers separately from successful synthesis/review output, and decide whether a rerun is warranted by packet integrity or model availability.
+- Exit code `1` means request, auth, config, billing, or terminal failure without a usable final result. Fix the specific cause before retrying.
+- Capture the run ID exactly from CLI output and reuse it for `watch`, `export`, `share status`, and post-run triage.
 - If the CLI reports insufficient prepaid credits, do not retry the same paid operation blindly. Check `converge billing balance`, top up if appropriate, then rerun with an explicit `--max-spend-usd` cap.
-- If the CLI reports `max_spend_exceeded`, do not remove the cap reflexively. Either raise it intentionally after user approval or choose cheaper models.
+- If the CLI reports `max_spend_exceeded`, do not remove or raise the cap reflexively. Either reduce scope, choose cheaper models, or raise it intentionally after user approval.
 
 10. Check or top up prepaid billing credits when needed.
 
@@ -123,6 +136,7 @@ brew install converge
 - Use `converge share enable <run-id>` to create or re-enable a public share for a completed run.
 - Use `converge share disable <run-id>` to revoke an active public share.
 - Share status/enable/disable use the authenticated API-v1 Research Pulse share contract and require `api.full`.
+- Confirm the target environment before `share enable`, `share disable`, `feed enable`, `feed disable`, `feed rotate`, `feed set-password`, or `feed clear-password`. These are state-changing account operations.
 - Use `converge feed status` to inspect whether the account feed exists, is enabled, and has password protection.
 - Use `converge feed enable`, `converge feed disable`, `converge feed set-password`, `converge feed clear-password`, and `converge feed rotate` for management.
 - Use `converge feed urls` to print Atom/RSS/JSON URLs. URL discovery requires `api.full` or a browser session; a `shares.feed`-only key can read an already-known URL but cannot discover it.
