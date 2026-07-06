@@ -49,9 +49,11 @@ brew install converge
 - If the user already has a question file, use it with `--question-file`.
 - Otherwise write the question into a workspace file such as `.codex/tmp/research-pulse-question.md` and point the CLI at that file.
 - Keep secrets out of workspace files.
-- Keep the submitted question body at or below 20,000 characters. The CLI, API, and web UI reject longer question text before starting a run. The browser Research Pulse form supports document uploads; the public CLI and `/api/v1/research-pulses` create API do not currently upload documents, so CLI/API packets must be shortened or summarized until document upload support exists there.
+- Keep the submitted question body at or below 20,000 characters. The CLI, API, and web UI reject longer question text before starting a run.
+- Put long source material in Research Pulse document uploads instead of the question body. In the CLI, pass one or more `--document <path>` flags. In the API, send `multipart/form-data` to `/api/v1/research-pulses` with repeated `documents` file parts plus the normal create fields.
+- Document uploads support PDF, DOCX, Markdown, and text files, up to 5 documents and 10 MB each. Unsupported, empty, unreadable, or oversized documents should be fixed before rerunning; dry-runs apply the same document admission checks and echo accepted document metadata. Do not paste a whole oversized document into the question as a workaround.
 - Measure the staged file before submitting, for example with `wc -m <question-file>`. Prefer a safe buffer below the hard cap for large packets; if the packet is near the cap, keep only the objective, non-negotiable constraints, key facts, evidence excerpts, and explicit verification requests.
-- If original document fidelity matters more than packet review, use the browser Research Pulse document-upload flow instead of pretending the CLI/API uploaded documents. Label summarized sections as summaries and include source paths or line ranges when relevant.
+- If you summarize source files into the question instead of uploading them, label summarized sections as summaries and include source paths or line ranges when relevant.
 - For near-limit packets, add a final `Completeness Check` or tail sentinel in the last 1-2k characters. Use a distinctive token or exact final sentence that reviewers and later JSON/share inspection can verify.
 
 5. For plan, code, architecture, or artifact review, build an access-aware context packet.
@@ -84,6 +86,7 @@ brew install converge
 - Pass `--output` for Markdown, `--json-output` for full JSON, or both.
 - For any automated paid run, especially multi-model or council runs, pass `--max-spend-usd <amount>` unless the user explicitly disables caps. Treat each rerun as a new cost center that needs its own cap.
 - Add `--model` and `--synth-model` only when overriding config defaults.
+- Attach source files with repeatable `--document <path>` flags when the run needs original document fidelity or source material that would crowd the question limit.
 - In advisor-capable builds, use `--advisor '<selector>=advisor:<id>'` or `--advisor '<selector>=template:<key>'` for explicit assignments.
 - In advisor-capable builds, `--use-saved-advisors` is the explicit opt-in path for reusing saved advisor defaults on a direct CLI run.
 - When advisors are applied, verify that the CLI echoes the resolved advisor mapping before treating the run input as final.
