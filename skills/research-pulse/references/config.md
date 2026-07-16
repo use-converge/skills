@@ -87,7 +87,7 @@ timeout = "30m"
 use_saved_advisors = true
 
 [profiles.default]
-base_url = "https://converge.example.com"
+base_url = "https://app.use-converge.com"
 # Use exact selector strings from `converge pulse models`.
 models = ["gpt-5-mini", "claude-sonnet-4", "gemini-3-flash-preview"]
 synth_model = "gpt-5-mini"
@@ -97,7 +97,7 @@ council_mode = true
 
 [profiles.production]
 extends = "default"
-base_url = "https://converge.example.com"
+base_url = "https://app.use-converge.com"
 
 [profiles.fast]
 extends = "default"
