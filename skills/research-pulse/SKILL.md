@@ -7,6 +7,13 @@ description: Manage advisor-aware Converge Research Pulse workflows through the 
 
 Use this skill to run Research Pulses through the external CLI and API contract instead of reaching into internal Go packages or HTML endpoints.
 
+For MCP-capable clients, the hosted endpoint is documented in the repository's
+[MCP guide](../../docs/MCP.md). Use `/mcp` with an `Authorization: Bearer cvg_...`
+key that has `api.full`; it is HTTP-only, never session-cookie or stdio based,
+and does not use OAuth discovery. Require an explicit `idempotency_key` for
+`research_pulse_create` retries because the operation can spend provider or
+prepaid-credit budget.
+
 ## Workflow
 
 1. Ensure the CLI path exists or install it with Homebrew.
