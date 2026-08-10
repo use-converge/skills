@@ -141,7 +141,7 @@ brew install converge
 
 - Use `converge billing balance` to inspect available and reserved prepaid credits.
 - Use `converge billing ledger --limit <n>` when you need recent credit/hold/capture/release history. Reservation detail is available through browser Settings/Admin billing surfaces.
-- If credits are insufficient, stop and contact an operator; the standalone CLI does not initiate external funding. When the server's opt-in Stripe Checkout flag and configuration are enabled, funding is initiated through the authenticated `/api/v1/billing/checkout-sessions` API and its durable payment-event status route, not through this CLI skill.
+- If credits are insufficient, stop and contact an operator; the standalone CLI does not transmit external Payment credentials. When the server's opt-in Stripe Checkout or Stripe MPP flag and configuration are enabled, funding is initiated through the authenticated Checkout API or the dedicated `/payments/mpp/top-ups` challenge surface, with the same durable payment-event status route and shared ledger boundary.
 - Never store wallet private keys or raw payment signatures in the Converge config file or workspace notes.
 
 11. Use supported share and share-feed commands for published Research Pulse outputs.
