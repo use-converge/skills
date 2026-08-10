@@ -134,17 +134,14 @@ brew install converge
 - Exit code `2` means partial failure with a usable result; preserve artifacts, report failed providers separately from successful synthesis/review output, and decide whether a rerun is warranted by packet integrity or model availability.
 - Exit code `1` means request, auth, config, billing, or terminal failure without a usable final result. Fix the specific cause before retrying.
 - Capture the run ID exactly from CLI output and reuse it for `watch`, `export`, `share status`, and post-run triage.
-- If the CLI reports insufficient prepaid credits, do not retry the same paid operation blindly. Check `converge billing balance`, top up if appropriate, then rerun with an explicit `--max-spend-usd` cap.
+- If the CLI reports insufficient prepaid credits, do not retry the same paid operation blindly. Check `converge billing balance`, review the ledger if needed, and contact an operator about funding before rerunning with an explicit `--max-spend-usd` cap.
 - If the CLI reports `max_spend_exceeded`, do not remove or raise the cap reflexively. Either reduce scope, choose cheaper models, or raise it intentionally after user approval.
 
-10. Check or top up prepaid billing credits when needed.
+10. Check prepaid billing credits when needed.
 
 - Use `converge billing balance` to inspect available and reserved prepaid credits.
-- Use `converge billing skus` before choosing a top-up SKU. Enabled top-up SKUs enforce the current $10 minimum, so do not assume smaller top-ups exist.
-- Use `converge billing top-up --sku <sku-id>` to request a scoped x402 payment challenge.
-- Use `converge billing ledger --limit <n>` when you need recent credit/hold/capture/release history. There is no current `converge billing reservations` command; reservation detail is available through browser Settings/Admin billing surfaces.
-- In headless environments, use `--signer-command <command>` only when the runtime provides a trusted signer. The CLI sends a JSON payload on stdin and expects the signed payment payload on stdout.
-- Treat `--payment-signature` as an explicit manual/debug path, and pair it with a stable `--idempotency-key`.
+- Use `converge billing ledger --limit <n>` when you need recent credit/hold/capture/release history. Reservation detail is available through browser Settings/Admin billing surfaces.
+- If credits are insufficient, stop and contact an operator; the standalone CLI does not initiate external funding. When the server's opt-in Stripe Checkout flag and configuration are enabled, funding is initiated through the authenticated `/api/v1/billing/checkout-sessions` API and its durable payment-event status route, not through this CLI skill.
 - Never store wallet private keys or raw payment signatures in the Converge config file or workspace notes.
 
 11. Use supported share and share-feed commands for published Research Pulse outputs.
@@ -263,27 +260,6 @@ Check prepaid credits:
 
 ```bash
 converge billing balance --config <path> --profile <name>
-```
-
-List top-up SKUs:
-
-```bash
-converge billing skus --config <path> --profile <name>
-```
-
-Request a top-up challenge:
-
-```bash
-converge billing top-up --sku usd_10 --config <path> --profile <name>
-```
-
-Settle a top-up with a headless signer, when the runtime provides one:
-
-```bash
-converge billing top-up \
-  --sku usd_10 \
-  --idempotency-key <stable-key> \
-  --signer-command <payment-signer-command>
 ```
 
 Wait on an existing run:
