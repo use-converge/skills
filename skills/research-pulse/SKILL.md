@@ -37,11 +37,12 @@ brew install converge
 - Otherwise use `--base-url` and `--api-key`, or the `CONVERGE_BASE_URL` and `CONVERGE_API_KEY` env vars.
 - If selectors are not already known, run `converge pulse models` first.
 - Prefer selectors with stronger recent reliability and lower average latency when the task benefits from fast turn time.
-- Use `converge pulse models --json` when an agent needs machine-readable selector stats; each item includes recent `reliability_percent`, `avg_latency_ms`, `p50_latency_ms`, `p95_latency_ms`, and grouped/daily breakdowns from the same 7-day stats shown in the Providers UI.
+- Use `converge pulse models --json` when an agent needs machine-readable selector stats; each item includes recent `reliability_percent`, `avg_latency_ms`, `p50_latency_ms`, `p95_latency_ms`, grouped/daily breakdowns, pooled `platform_latency_hint` data when available, and the shared advisory `health` verdict from the same 7-day stats shown in the Providers UI.
 - Read [references/config.md](references/config.md) for config discovery, precedence, and example profiles.
 - Before any paid or state-changing command, state the effective config path, profile name, base URL, and API-key source without printing the key. If the resolved environment is ambiguous, or a local/dev/staging base URL is paired with a production-looking profile, stop and ask for explicit approval or a corrected `--config`, `--profile`, or `--base-url`.
 - In local checkout testing, use the project-provided environment loader when it exists, for example `direnv exec .`, and clear unrelated profile defaults when you need to force localhost behavior. Do not let saved production profile defaults silently steer a local test.
 - For connectivity and selector sanity checks, use `converge pulse models --json` before a paid run. Treat selector failures from an external router or gateway as model/provider availability problems, not as prompt-truncation evidence.
+- Before a paid `converge pulse run`, inspect the CLI's stderr health advisory for selected models and the synthesizer. It is advisory-only: do not treat a warning as a failed selection or an instruction to silently reroute.
 
 3. Inspect or manage Advisors when the task needs perspective control.
 
