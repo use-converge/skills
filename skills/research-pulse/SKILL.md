@@ -135,6 +135,7 @@ brew install converge
 - Exit code `2` means partial failure with a usable result; preserve artifacts, report failed providers separately from successful synthesis/review output, and decide whether a rerun is warranted by packet integrity or model availability.
 - Exit code `1` means request, auth, config, billing, or terminal failure without a usable final result. Fix the specific cause before retrying.
 - Capture the run ID exactly from CLI output and reuse it for `watch`, `export`, `share status`, and post-run triage.
+- A `billing_unavailable` response can mean a newly selected shared model lacks explicit customer pricing or an operation hold. Report the selector and affected operation to the operator; increasing the spend cap or retrying does not repair missing server pricing. Operators must reconcile shared-access and platform-paid credential configuration and validate Research Pulse, summary, and Question Helper pricing together.
 - If the CLI reports insufficient prepaid credits, do not retry the same paid operation blindly. Check `converge billing balance`, review the ledger if needed, and contact an operator about funding before rerunning with an explicit `--max-spend-usd` cap.
 - If the CLI reports `max_spend_exceeded`, do not remove or raise the cap reflexively. Either reduce scope, choose cheaper models, or raise it intentionally after user approval.
 
