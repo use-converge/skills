@@ -29,6 +29,7 @@ brew install converge
 ```
 
 - If `converge` is already installed with Homebrew but needs the latest available release, run `brew update` and `brew upgrade converge`.
+- For the Go certificate security update, upgrade to `cli-v0.12.1` or newer. Run `converge version` and confirm the reported Go version is `go1.27.3` or newer.
 - If Homebrew is unavailable, say that the CLI is missing and ask the user to install `converge` or provide a path to it.
 
 2. Resolve auth, base URL, and defaults before submitting a run.
